@@ -113,12 +113,13 @@ def get_logs():
             }
 
 
-    
+
     response = app.response_class(
         response=json.dumps(result, ensure_ascii=False),
         mimetype='application/json'
     )
 
     return response, 200
+
 if __name__ == '__main__':
     app.run(debug=True)
