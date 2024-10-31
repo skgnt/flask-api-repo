@@ -34,23 +34,23 @@
             <div class="card-header"></div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-md col-12 mb-2">
                         <div class="fs-5">Time</div>
                         <div class="time"></div>
                     </div>
-                    <div class="col">
+                    <div class="col-md col-12 mb-2">
                         <div class="fs-5">CPU Usage</div>
                         <div class="cpu"></div>
                     </div>
-                    <div class="col">
+                    <div class="col-md col-12 mb-2">
                         <div class="fs-5">CPU Memory Usage</div>
                         <div class="cpu-memory"></div>
                     </div>
-                    <div class="col">
+                    <div class="col-md col-12 mb-2">
                         <div class="fs-5">GPU Usage</div>
                         <div class="gpu"></div>
                     </div>
-                    <div class="col">
+                    <div class="col-md col-12 mb-2">
                         <div class="fs-5">GPU Memory Usage</div>
                         <div class="gpu-memory"></div>
                     </div>
@@ -143,7 +143,7 @@
                         const clone = template.content.cloneNode(true)
                         //idとしてkeyを設定
                         clone.querySelector(".card").id = key
-                        clone.querySelector(".card-header").textContent = key
+                        clone.querySelector(".card-header").textContent = key+`(${log_data[key].gpu_name})`
                         clone.querySelector(".time").textContent = server.timestamp
                         if (server.status === "success") {
 

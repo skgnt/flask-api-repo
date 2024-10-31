@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify,render_template
 from flask_sqlalchemy import SQLAlchemy
 import json
 from datetime import datetime, timedelta
+import pytz
 
 app = Flask(__name__)
 
@@ -9,6 +10,7 @@ app.config['JSON_AS_ASCII'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///monitor.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+jst = pytz.timezone('Asia/Tokyo')
 
 class MonitorLog(db.Model):
     __tablename__ = 'monitor_logs'
@@ -18,8 +20,10 @@ class MonitorLog(db.Model):
     gpu = db.Column(db.Integer, nullable=True)
     cpu_memory = db.Column(db.Integer, nullable=True)
     gpu_memory = db.Column(db.Integer, nullable=True)
+    gpu_name = db.Column(db.String, nullable=True)
+
     server = db.Column(db.String, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.now)
+    timestamp = db.Column(db.DateTime, default=datetime.now(jst))
 
     error_logs = db.relationship('ErrorLog', back_populates='monitor_log')
 
@@ -31,6 +35,8 @@ class ErrorLog(db.Model):
     msg = db.Column(db.String, nullable=False)
 
     monitor_log = db.relationship('MonitorLog', back_populates='error_logs')
+
+
 
 
 @app.route('/')
@@ -49,7 +55,8 @@ def add_log():
             cpu_memory=data['memory_usage'],
             gpu_memory=data['gpu_memory_usage'],
             server=data['server'],
-            timestamp=datetime.now()
+            gpu_name=data['gpu_name'],
+            timestamp=datetime.now(jst)
         )
         db.session.add(new_log)
     elif data['status'] == 'failed':
@@ -59,8 +66,9 @@ def add_log():
             gpu=None,
             cpu_memory=None,
             gpu_memory=None,
+            gpu_name=None,
             server=data['server'],
-            timestamp=datetime.now()
+            timestamp=datetime.now(jst)
         )
 
         db.session.add(new_log)
@@ -79,7 +87,7 @@ def add_log():
 
 @app.route('/log', methods=['GET'])
 def get_logs():
-    one_hour_ago = datetime.now() - timedelta(hours=1)
+    one_hour_ago = datetime.now(jst) - timedelta(hours=1)
     #dbのserverのユニークな値を取得
     servers = db.session.query(MonitorLog.server).distinct().all()
     #logsに各サーバーの最新のログを格納
@@ -101,6 +109,7 @@ def get_logs():
                 'gpu_memory_usage': str(log.gpu_memory),
                 'memory_usage': str(log.cpu_memory),
                 'status': log.status,
+                'gpu_name': log.gpu_name,
                 'timestamp': log.timestamp.strftime('%Y-%m-%d %H:%M:%S')
             }
         elif log.status == 'failed':
@@ -108,6 +117,7 @@ def get_logs():
             print(error_log.msg)
             result[log.server]={
                 'status': log.status,
+                'gpu_name': log.gpu_name,
                 'error': error_log.msg if error_log else None,
                 'timestamp': log.timestamp.strftime('%Y-%m-%d %H:%M:%S')
             }
@@ -123,3 +133,5 @@ def get_logs():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # with app.app_context():
+    #     db.create_all()
